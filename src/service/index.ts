@@ -19,6 +19,8 @@ router.post('/daily-strategy', verifyAccessToken, SaveDailyGoalStrategyData)
 
 router.get('/get-positions', verifyAccessToken, )
 
+router.get('/health', healthcheck)
+
 // function to verify access token and return user id
 export async function verifyAccessToken(req, res, next) {
     const headerKey = process.env.X_ACCESS_TOKEN_HEADER
@@ -36,5 +38,10 @@ export async function verifyAccessToken(req, res, next) {
         next()
     });
 }
+
+async function healthcheck(req, res, next) {
+    res.status(200).send("OK")
+}
+
 
 export default router;
