@@ -4,7 +4,7 @@ import logger from "../logger.js";
 
 export async function GetDailyGoalStrategyData(req, res, next) {
     const { broker_id } = req.query;
-    db.collection("daily_goal_strategy").doc(req.uid).get().then((doc) => {
+    await db.collection("daily_goal_strategy").doc(req.uid).get().then((doc) => {
         if (!doc.exists) {
             res.status(404).send("strategy not found");
             return;
@@ -20,6 +20,8 @@ export async function GetDailyGoalStrategyData(req, res, next) {
         res.status(500).send("Internal Server Error");
     });
 
+    
+
     next()
 }
 
@@ -28,7 +30,7 @@ export async function SaveDailyGoalStrategyData(req, res, next) {
 
     const { trailing_stop_loss, target_profit, stop_loss } = req.body;
     
-    db.collection("daily_goal_strategy").doc(req.uid).set({
+    await db.collection("daily_goal_strategy").doc(req.uid).set({
         trailing_stop_loss: trailing_stop_loss,
         target_profit: target_profit,
         stop_loss: stop_loss,

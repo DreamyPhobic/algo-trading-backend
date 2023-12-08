@@ -73,11 +73,11 @@ var NorenRestApi = function(params) {
     });
 
 
-  function post_request(route, params, usertoken = "") {
+  function post_request(route, params, token) {
         let url = endpoint + routes[route];        
         let payload = 'jData=' + JSON.stringify(params);
         //if(usertoken.isEmpty == false)
-          payload = payload + `&jKey=${self.__susertoken}`;
+          payload = payload + `&jKey=${token}`;
         return axios.post(url, payload);
         
         //return requestInstance.request(options);
@@ -119,13 +119,28 @@ var NorenRestApi = function(params) {
         };
 
         console.log(authparams);
-        await post_request("authorize", authparams).then((response) => {
-          if (response.stat == 'Ok'){
-            return response
-          }
-        }).catch(function (err){
+
+        let response = null
+        try {
+          response = await post_request("authorize", authparams)
+        }
+        catch(err) {
           throw err
-        });
+        }
+
+        if(response == null) {
+          throw Error("Unexpected error occured during login")
+        }
+
+        if (response.stat == 'Ok') {
+          return response
+        }
+        else if (response.stat == 'Not_Ok'){
+          throw Error(response.emsg)
+        }
+        else {
+          throw Error("Unexpected error occured during login")
+        }
     };
 
 
@@ -394,13 +409,13 @@ var NorenRestApi = function(params) {
          * @param no params
          */
          
-    self.get_positions = function () {
+    self.get_positions = function (uid, actid, token) {
 
           let values          = {};
-          values["uid"]       = self.__username   ;
-          values["actid"]     = self.__accountid   ;       
+          values["uid"]       = uid   ;
+          values["actid"]     = actid   ;       
           
-          let reply = post_request("positions", values, self.__susertoken);
+          let reply = post_request("positions", values, token);
           return reply;
         };
     /**

@@ -22,4 +22,5 @@ export function logRequest(req, res, next) {
 export function logResponse(req, res, next) {
     var requestId = req.headers["x-request-id"];
     logger.info({ "Request Id": requestId, "API Request": req.url, "Method": req.method, "Body": req.body, "Params": req.params, "Query": req.query, "Response Code": res.statusCode });
+    res.end();
 }

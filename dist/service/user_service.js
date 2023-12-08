@@ -3,9 +3,9 @@ import jwt from "jsonwebtoken";
 import logger from "../logger.js";
 export async function Login(req, res, next) {
     const { firebase_token, user } = req.body;
-    await admin.auth().verifyIdToken(firebase_token).then((decodedToken) => {
+    await admin.auth().verifyIdToken(firebase_token).then(async (decodedToken) => {
         const uid = decodedToken.uid;
-        db.collection("users").doc(uid).set({
+        await db.collection("users").doc(uid).set({
             "email": user.email,
             "name": user.name,
             "profile_pic_url": user.profile_pic_url,

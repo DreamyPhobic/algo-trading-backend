@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { Login } from './user_service.js';
-import { GetBrokerCredentials, LoginToShoonya } from './broker_service.js';
+import { GetBrokerCredentials, LoginToShoonya, GetPositions } from './broker_service.js';
 import { GetDailyGoalStrategyData, SaveDailyGoalStrategyData } from './strategy_service.js';
 import jwt from "jsonwebtoken";
 
@@ -17,7 +17,7 @@ router.post('/broker/login', verifyAccessToken, LoginToShoonya)
 router.get('/daily-strategy', verifyAccessToken, GetDailyGoalStrategyData)
 router.post('/daily-strategy', verifyAccessToken, SaveDailyGoalStrategyData)
 
-router.get('/get-positions', verifyAccessToken, )
+router.get('/get-positions', verifyAccessToken, GetPositions)
 
 router.get('/health', healthcheck)
 
@@ -25,10 +25,6 @@ router.get('/health', healthcheck)
 export async function verifyAccessToken(req, res, next) {
     const headerKey = process.env.X_ACCESS_TOKEN_HEADER
     const accessToken = req.headers[headerKey];
-    if (!accessToken) {
-        req.uid = ""
-        next()
-    }
     
     jwt.verify(accessToken, process.env.JWT_SECRET, (err, data) => {
         if (err) {
