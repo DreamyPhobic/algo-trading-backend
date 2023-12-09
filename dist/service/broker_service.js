@@ -80,7 +80,7 @@ export async function LoginToShoonya(req, res, next) {
     await db.collection(brokerCollectionId).doc(req.uid).collection("details").doc("auth_data").set({
         token: loginResponse.susertoken,
         account_id: loginResponse.actid,
-        username: loginResponse.uname
+        userid: loginResponse.uid
     }).then(() => {
         console.log("added auth data");
     }).catch((error) => {

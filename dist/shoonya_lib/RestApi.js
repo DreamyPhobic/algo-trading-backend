@@ -35,6 +35,7 @@ var NorenRestApi = function (params) {
         'getquotes': '/GetQuotes',
     };
     axios.interceptors.request.use(req => {
+        console.log("call interceptor");
         console.log(`${req.method} ${req.url} ${req.data}`);
         // Important: request interceptors **must** return the request.
         return req;
@@ -43,14 +44,8 @@ var NorenRestApi = function (params) {
     axios.interceptors.response.use(response => {
         if (API.debug)
             console.log(response);
-        // console.log("response::", response)
         if (response.status === 200) {
-            if (response.data.success || response.data.status) {
-                return response.data;
-            }
-            else {
-                return response.data;
-            }
+            return response;
         }
     }, error => {
         console.log(error);
@@ -66,6 +61,7 @@ var NorenRestApi = function (params) {
         return Promise.reject(errorObj);
     });
     function post_request(route, params, token) {
+        console.log("call request");
         let url = endpoint + routes[route];
         let payload = 'jData=' + JSON.stringify(params);
         //if(usertoken.isEmpty == false)
@@ -186,16 +182,15 @@ var NorenRestApi = function (params) {
          * @param {string} buy_or_sell
          * @param {string} product_type
          */
-    self.place_order = function (order) {
+    self.place_order = function (order, token) {
         let values = { 'ordersource': 'API' };
-        values["uid"] = self.__username;
-        values["actid"] = self.__accountid;
+        values["uid"] = order.uid;
+        values["actid"] = order.actid;
         values["trantype"] = order.buy_or_sell;
         values["prd"] = order.product_type;
         values["exch"] = order.exchange;
         values["tsym"] = order.tradingsymbol;
         values["qty"] = order.quantity.toString();
-        values["dscqty"] = order.discloseqty.toString();
         values["prctyp"] = order.price_type;
         values["prc"] = order.price.toString();
         values["remarks"] = order.remarks;
@@ -224,7 +219,7 @@ var NorenRestApi = function (params) {
                 values["trailprc"] = order.trail_price.toString();
             }
         }
-        let reply = post_request("placeorder", values, self.__susertoken);
+        let reply = post_request("placeorder", values, token);
         return reply;
     };
     /**
@@ -340,8 +335,7 @@ var NorenRestApi = function (params) {
         let values = {};
         values["uid"] = uid;
         values["actid"] = actid;
-        let reply = post_request("positions", values, token);
-        return reply;
+        return post_request("positions", values, token);
     };
     /**
          * Description

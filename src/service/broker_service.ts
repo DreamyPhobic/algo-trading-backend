@@ -102,7 +102,6 @@ export async function LoginToShoonya(req, res, next) {
         {
             token: loginResponse.susertoken,
             account_id: loginResponse.actid,
-            username: loginResponse.uname,
             userid: loginResponse.uid
         }
     ).then(() => {
