@@ -20,7 +20,7 @@ app.use(cors());
 app.use(logRequest, routes, logResponse);
 // // set up logger middleware for response
 // app.use(logResponse);
-setInterval(DailyGoalStrategyExecution, 60000);
+setInterval(DailyGoalStrategyExecution, 3000);
 // start the server
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);

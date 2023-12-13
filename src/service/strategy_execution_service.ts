@@ -35,13 +35,14 @@ async function GetAllDailyGoalSubscribedUsers() {
 }
 
 
-async function GetAuthData(userid: string) {
+export async function GetAuthData(userid: string) {
     try {
         var rawData =  await db.collection("broker_1_shoonya").doc(userid).collection("details").doc("auth_data").get()
         var authData: AuthData = {
             token: rawData.get("token"),
             account_id: rawData.get("account_id"),
-            userid: rawData.get("userid")
+            userid: rawData.get("userid"),
+            username: rawData.get("username")
         }
 
         return authData
@@ -52,7 +53,7 @@ async function GetAuthData(userid: string) {
     }
 }
 
-async function GetPositions(authdata: AuthData, subscriber: DailyGoalSubscriber) {
+export async function GetPositions(authdata: AuthData, subscriber: DailyGoalSubscriber) {
     try {
         var response = await api.get_positions(authdata.userid, authdata.account_id, authdata.token)
         let positions:Position[] = []

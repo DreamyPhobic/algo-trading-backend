@@ -1,7 +1,9 @@
 import config from "../configs/broker.js";
 import { db } from "../configs/firebase.js";
+import { DailyGoalSubscriber } from "../dto/daily_goal_subscriber.js";
 import logger from "../logger.js";
 import ShoonyaApi from "../shoonya_lib/RestApi.js";
+import { GetAuthData, GetPositions } from "./strategy_execution_service.js";
 // Login to Shoonya account
 let api = new ShoonyaApi({});
 export async function GetBrokerCredentials(req, res, next) {
@@ -25,31 +27,25 @@ export async function GetBrokerCredentials(req, res, next) {
     });
     next();
 }
-export async function GetPositions(req, res, next) {
-    const { broker_id } = req.query;
-    const brokerCollectionId = config.get(broker_id);
-    if (!brokerCollectionId) {
-        res.status(400).send("Invalid Broker ID");
-        next();
-        return;
+export async function GetOverallPositions(req, res, next) {
+    try {
+        let authdata = await GetAuthData(req.uid);
+        let subscriber = new DailyGoalSubscriber();
+        subscriber.userid = req.uid;
+        let positions = await GetPositions(authdata, subscriber);
+        let rpnl = 0;
+        let urmtom = 0;
+        for (let i = 0; i < positions.length; i++) {
+            rpnl += parseFloat(positions[i].rpnl);
+            urmtom += parseFloat(positions[i].urmtom);
+        }
+        let daypnl = rpnl + urmtom;
+        res.status(200).send({ "current": -43 });
     }
-    const authData = await db.collection(brokerCollectionId).doc(req.uid).collection("details").doc("auth_data").get();
-    console.log("AuthData: ", authData.data());
-    if (authData == null) {
-        res.status(400).send("Session expired. Login to broker account again.");
-        next();
-        return;
+    catch (err) {
+        logger.error("Failed to get overall m2m position", { "uid": req.uid });
     }
-    let ret = await api.get_positions("FA106925", "FA106925", "d8e2c04ec5484d029409d911d9b9579f90337c38890afa4f83375ff3c0a45829");
-    console.log("Res: ", ret);
-    let mtm = 0;
-    let pnl = 0;
-    for (let i = 0; i < ret.data.length; i++) {
-        mtm += parseFloat(ret[i]['urmtom']);
-        pnl += parseFloat(ret[i]['rpnl']);
-    }
-    let day_m2m = mtm + pnl;
-    console.log(`${day_m2m} is your Daily MTM`);
+    next();
 }
 export async function LoginToShoonya(req, res, next) {
     let earlyExit = false;
@@ -75,12 +71,14 @@ export async function LoginToShoonya(req, res, next) {
     catch (err) {
         logger.error("Failed to login in shoonya", err, { "Request Id": req.headers["x-request-id"] });
         res.status(500).send("Login failed. Please check the information again.\n" + err.message);
-        return next();
+        next();
+        return;
     }
     await db.collection(brokerCollectionId).doc(req.uid).collection("details").doc("auth_data").set({
-        token: loginResponse.susertoken,
-        account_id: loginResponse.actid,
-        userid: loginResponse.uid
+        token: loginResponse.data.susertoken,
+        account_id: loginResponse.data.actid,
+        userid: loginResponse.data.uid,
+        username: loginResponse.data.uname
     }).then(() => {
         console.log("added auth data");
     }).catch((error) => {

@@ -25,13 +25,14 @@ async function GetAllDailyGoalSubscribedUsers() {
         throw err;
     }
 }
-async function GetAuthData(userid) {
+export async function GetAuthData(userid) {
     try {
         var rawData = await db.collection("broker_1_shoonya").doc(userid).collection("details").doc("auth_data").get();
         var authData = {
             token: rawData.get("token"),
             account_id: rawData.get("account_id"),
-            userid: rawData.get("userid")
+            userid: rawData.get("userid"),
+            username: rawData.get("username")
         };
         return authData;
     }
@@ -40,7 +41,7 @@ async function GetAuthData(userid) {
         throw err;
     }
 }
-async function GetPositions(authdata, subscriber) {
+export async function GetPositions(authdata, subscriber) {
     try {
         var response = await api.get_positions(authdata.userid, authdata.account_id, authdata.token);
         let positions = [];
@@ -99,12 +100,12 @@ async function CheckLimits(authdata, subscriber, positions) {
     let daypnl = rpnl + urmtom;
     if (daypnl >= subscriber.target_profit) {
         positions.map(async (position) => await ExitPosition(authdata, position, subscriber));
-        // removeDailyGoalSubscriberData(subscriber)
+        removeDailyGoalSubscriberData(subscriber);
         return;
     }
     else if (daypnl <= subscriber.origin - subscriber.stop_loss) {
         positions.map(async (position) => await ExitPosition(authdata, position, subscriber));
-        // removeDailyGoalSubscriberData(subscriber)
+        removeDailyGoalSubscriberData(subscriber);
         return;
     }
     if (subscriber.trailing_stop_loss != 0) {

@@ -35,7 +35,6 @@ var NorenRestApi = function (params) {
         'getquotes': '/GetQuotes',
     };
     axios.interceptors.request.use(req => {
-        console.log("call interceptor");
         console.log(`${req.method} ${req.url} ${req.data}`);
         // Important: request interceptors **must** return the request.
         return req;
@@ -48,11 +47,10 @@ var NorenRestApi = function (params) {
             return response;
         }
     }, error => {
-        console.log(error);
         let errorObj = {};
         if (error.response) {
-            //    errorObj.status = error.response.status;
-            //    errorObj.message = error.response.statusText;
+            errorObj.status = error.response.status;
+            errorObj.message = error.response.statusText;
         }
         else {
             errorObj.status = 500;
@@ -61,7 +59,6 @@ var NorenRestApi = function (params) {
         return Promise.reject(errorObj);
     });
     function post_request(route, params, token) {
-        console.log("call request");
         let url = endpoint + routes[route];
         let payload = 'jData=' + JSON.stringify(params);
         //if(usertoken.isEmpty == false)
@@ -101,7 +98,7 @@ var NorenRestApi = function (params) {
         console.log(authparams);
         let response = null;
         try {
-            response = await post_request("authorize", authparams);
+            response = await post_request("authorize", authparams, "");
         }
         catch (err) {
             throw err;
@@ -109,11 +106,11 @@ var NorenRestApi = function (params) {
         if (response == null) {
             throw Error("Unexpected error occured during login");
         }
-        if (response.stat == 'Ok') {
+        if (response.data.stat === 'Ok') {
             return response;
         }
-        else if (response.stat == 'Not_Ok') {
-            throw Error(response.emsg);
+        else if (response.data.stat === 'Not_Ok') {
+            throw Error(response.data.emsg);
         }
         else {
             throw Error("Unexpected error occured during login");

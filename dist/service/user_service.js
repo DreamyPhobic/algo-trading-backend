@@ -25,3 +25,19 @@ export async function Login(req, res, next) {
     });
     next();
 }
+export async function GetUser(req, res, next) {
+    try {
+        let rawData = await db.collection("users").doc(req.uid).get();
+        let user = {
+            email: rawData.get("email"),
+            name: rawData.get("name"),
+            profile_pic_url: rawData.get("profile_pic_url")
+        };
+        res.status(200).send(user);
+    }
+    catch (err) {
+        res.status(500).send("Internal Server Error");
+        logger.error("Failed to get user details", { "uid": req.uid });
+    }
+    next();
+}

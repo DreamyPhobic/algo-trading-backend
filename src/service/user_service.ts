@@ -1,6 +1,7 @@
 import admin, { db } from "../configs/firebase.js";
 import jwt from "jsonwebtoken";
 import logger from "../logger.js";
+import { User } from "../dto/user.js";
 
 
 export async function Login(req, res, next) {
@@ -27,6 +28,23 @@ export async function Login(req, res, next) {
         res.status(500).send("Internal Server Error")
     });
     next();
+}
+
+export async function GetUser(req, res, next) {
+    try {
+        let rawData = await db.collection("users").doc(req.uid).get()
+        let user : User = {
+            email: rawData.get("email"),
+            name: rawData.get("name"),
+            profile_pic_url: rawData.get("profile_pic_url")
+        }
+        res.status(200).send(user)
+        
+    } catch(err) {
+        res.status(500).send("Internal Server Error")
+        logger.error("Failed to get user details", {"uid": req.uid})
+    }
+    next()
 }
 
 
