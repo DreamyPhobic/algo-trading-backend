@@ -52,7 +52,7 @@ export async function GetOverallPositions(req, res, next) {
         let daypnl = rpnl + urmtom;
 
 
-        res.status(200).send({"current": -43})
+        res.status(200).send({"current": daypnl})
         
 
     } catch(err) {

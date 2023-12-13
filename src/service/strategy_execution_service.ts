@@ -87,8 +87,8 @@ async function ExitPosition(authdata: AuthData, position: Position, subscriber: 
             order.quantity = -parseFloat(position.netqty)
             order.buy_or_sell = "B"
         }
-        order.product_type="I"
-        order.price_type="LMT"
+        order.product_type=position.prd
+        order.price_type="MKT"
         order.price = parseFloat(position.lp)
         order.exchange = position.exch
         order.tradingsymbol = position.tsym;

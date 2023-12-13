@@ -34,11 +34,11 @@ var NorenRestApi = function (params) {
         'scripinfo': '/GetSecurityInfo',
         'getquotes': '/GetQuotes',
     };
-    axios.interceptors.request.use(req => {
-        console.log(`${req.method} ${req.url} ${req.data}`);
-        // Important: request interceptors **must** return the request.
-        return req;
-    });
+    //   axios.interceptors.request.use(req => {
+    //     console.log(`${req.method} ${req.url} ${req.data}`);
+    //   // Important: request interceptors **must** return the request.
+    //   return req;
+    // });
     // Add a response interceptor
     axios.interceptors.response.use(response => {
         if (API.debug)
