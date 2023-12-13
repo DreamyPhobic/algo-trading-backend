@@ -1,4 +1,4 @@
-import { db } from "../configs/firebase";
+import { db } from "../configs/firebase.js";
 
 
 export async function cleanupStrategyData() {

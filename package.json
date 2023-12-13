@@ -8,7 +8,6 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "npm run tsc && node ./dist/index.js",
     "tsc": "tsc",
-    
     "dev": "ts-node-dev --respawn --transpile-only ./src/index.ts"
   },
   "author": "",
@@ -22,6 +21,7 @@
     "firebase-admin": "^11.11.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "node-cron": "^3.0.3",
     "winston": "^3.11.0",
     "ws": "^8.14.2"
   },
@@ -32,6 +32,7 @@
     "@types/jest": "^29.5.8",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.9.0",
+    "@types/node-cron": "^3.0.11",
     "@types/ws": "^8.5.9",
     "@typescript-eslint/parser": "^6.10.0",
     "ts-node": "^10.9.1",

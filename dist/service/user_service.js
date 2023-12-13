@@ -1,6 +1,7 @@
 import admin, { db } from "../configs/firebase.js";
 import jwt from "jsonwebtoken";
 import logger from "../logger.js";
+import { GetAuthData } from "./strategy_execution_service.js";
 export async function Login(req, res, next) {
     const { firebase_token, user } = req.body;
     await admin.auth().verifyIdToken(firebase_token).then(async (decodedToken) => {
@@ -27,10 +28,11 @@ export async function Login(req, res, next) {
 }
 export async function GetUser(req, res, next) {
     try {
+        let authdata = await GetAuthData(req.uid);
         let rawData = await db.collection("users").doc(req.uid).get();
         let user = {
             email: rawData.get("email"),
-            name: rawData.get("name"),
+            name: authdata.username,
             profile_pic_url: rawData.get("profile_pic_url")
         };
         res.status(200).send(user);

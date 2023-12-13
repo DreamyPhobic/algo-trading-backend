@@ -40,7 +40,7 @@ export async function GetOverallPositions(req, res, next) {
             urmtom += parseFloat(positions[i].urmtom);
         }
         let daypnl = rpnl + urmtom;
-        res.status(200).send({ "current": -43 });
+        res.status(200).send({ "current": daypnl });
     }
     catch (err) {
         logger.error("Failed to get overall m2m position", { "uid": req.uid });
