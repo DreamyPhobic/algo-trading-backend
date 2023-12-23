@@ -28,7 +28,7 @@ async function GetAllDailyGoalSubscribedUsers() {
 
         return subscribers
     }
-    catch(err) {
+    catch (err) {
         logger.error("Error in fetching all users subscribed to strategy.")
         throw err
     }
@@ -37,7 +37,7 @@ async function GetAllDailyGoalSubscribedUsers() {
 
 export async function GetAuthData(userid: string) {
     try {
-        var rawData =  await db.collection("broker_1_shoonya").doc(userid).collection("details").doc("auth_data").get()
+        var rawData = await db.collection("broker_1_shoonya").doc(userid).collection("details").doc("auth_data").get()
         var authData: AuthData = {
             token: rawData.get("token"),
             account_id: rawData.get("account_id"),
@@ -47,8 +47,8 @@ export async function GetAuthData(userid: string) {
 
         return authData
     }
-    catch(err) {
-        logger.error("Error in fetching the auth data of user", err.message, {"uid": userid})
+    catch (err) {
+        logger.error("Error in fetching the auth data of user", err.message, { "uid": userid })
         throw err
     }
 }
@@ -56,7 +56,7 @@ export async function GetAuthData(userid: string) {
 export async function GetPositions(authdata: AuthData, subscriber: DailyGoalSubscriber) {
     try {
         var response = await api.get_positions(authdata.userid, authdata.account_id, authdata.token)
-        let positions:Position[] = []
+        let positions: Position[] = []
         if (Array.isArray(response.data)) {
             response.data.forEach((data) => {
                 var position: Position = data
@@ -65,9 +65,9 @@ export async function GetPositions(authdata: AuthData, subscriber: DailyGoalSubs
         }
         return positions
     }
-    catch(err) {
-        logger.error("Failed to fetch positions of user", {"uid": subscriber.userid, "authdata":authdata }, err.message)
-        
+    catch (err) {
+        logger.error("Failed to fetch positions of user", { "uid": subscriber.userid, "authdata": authdata }, err.message)
+
     }
 
     return []
@@ -79,64 +79,66 @@ async function ExitPosition(authdata: AuthData, position: Position, subscriber: 
         var order: Order = new Order()
         order.uid = authdata.userid
         order.actid = authdata.account_id
-        if (parseFloat(position.netqty) >= 0) {
+        if (parseFloat(position.netqty) > 0) {
             order.quantity = parseFloat(position.netqty)
             order.buy_or_sell = "S"
         }
-        else {
+        else if (parseFloat(position.netqty) < 0) {
             order.quantity = -parseFloat(position.netqty)
             order.buy_or_sell = "B"
         }
-        order.product_type=position.prd
-        order.price_type="MKT"
-        order.price = parseFloat(position.lp)
+        else {
+            return;
+        }
+        order.product_type = position.prd
+        order.price_type = "MKT"
+        order.price = 0
         order.exchange = position.exch
         order.tradingsymbol = position.tsym;
         order.remarks = "Order placed By My option RMS"
         order.retention = "DAY"
-        
+
         let response = await api.place_order(order, authdata.token)
         if (response.data.stat === "Not_Ok") {
             throw Error(response.data.emsg)
         }
         else if (response.data.stat === "Ok") {
-            logger.info("Order placed", {"uid": subscriber.userid, "authdata": authdata, "OrderId": response.data.norenordno})
+            logger.info("Order placed", { "uid": subscriber.userid, "authdata": authdata, "OrderId": response.data.norenordno })
         }
     }
-    catch(err) {
-        logger.error("Failed to exit position of user", {"uid": subscriber.userid, "position": position, "authdata": authdata}, err.message)
+    catch (err) {
+        logger.error("Failed to exit position of user", { "uid": subscriber.userid, "position": position, "authdata": authdata }, err.message)
     }
 }
 
 async function CheckLimits(authdata: AuthData, subscriber: DailyGoalSubscriber, positions: Position[]) {
     let rpnl = 0;
     let urmtom = 0;
-    for (let i=0; i<positions.length; i++) {
+    for (let i = 0; i < positions.length; i++) {
         rpnl += parseFloat(positions[i].rpnl)
         urmtom += parseFloat(positions[i].urmtom)
     }
 
     let daypnl = rpnl + urmtom;
 
-    if (daypnl >= subscriber.target_profit) {
+    if (subscriber.target_profit != 0 && daypnl >= subscriber.target_profit) {
         positions.map(async (position) => await ExitPosition(authdata, position, subscriber))
-        removeDailyGoalSubscriberData(subscriber)
+        // removeDailyGoalSubscriberData(subscriber)
         return
 
     }
-    else if (daypnl <= subscriber.origin - subscriber.stop_loss) {
+    else if ((subscriber.stop_loss != 0) && (daypnl <= subscriber.origin - subscriber.stop_loss)) {
         positions.map(async (position) => await ExitPosition(authdata, position, subscriber))
-        removeDailyGoalSubscriberData(subscriber)
+        // removeDailyGoalSubscriberData(subscriber)
         return
     }
 
-    if (subscriber.trailing_stop_loss != 0) {
-        if (daypnl >= subscriber.origin + subscriber.trailing_stop_loss) {
-            var times = Math.abs(daypnl/subscriber.trailing_stop_loss)
-            subscriber.origin = times * subscriber.trailing_stop_loss
-            updateDailyGoalSubscriberData(subscriber)
-        }
-    } 
+    if (subscriber.trailing_stop_loss != 0 && (daypnl >= subscriber.origin + subscriber.trailing_stop_loss)) {
+
+        var times = Math.abs(daypnl / subscriber.trailing_stop_loss)
+        subscriber.origin = times * subscriber.trailing_stop_loss
+        updateDailyGoalSubscriberData(subscriber)
+    }
 }
 
 async function updateDailyGoalSubscriberData(subscriber: DailyGoalSubscriber) {
@@ -154,29 +156,29 @@ async function removeDailyGoalSubscriberData(subscriber: DailyGoalSubscriber) {
 }
 
 async function executeStrategy(subscriber: DailyGoalSubscriber) {
-    
+
     try {
         var authdata = await GetAuthData(subscriber.userid)
-        
+
         var positions = await GetPositions(authdata, subscriber)
 
         await CheckLimits(authdata, subscriber, positions)
     }
-    catch(err) {
+    catch (err) {
         throw err
     }
-    
+
 }
 
 export async function DailyGoalStrategyExecution() {
-   
+
     let subscribers = await GetAllDailyGoalSubscribedUsers()
 
     const promises = subscribers.map(subscriber => executeStrategy(subscriber))
     try {
         await Promise.all(promises);
         console.log('All operations X completed successfully.');
-      } catch (error) {
+    } catch (error) {
         console.error('Error occurred while performing operations:', error);
-      }
+    }
 }
