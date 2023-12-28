@@ -26,6 +26,12 @@ export async function Login(req, res, next) {
     });
     next();
 }
+export async function RefreshAccessToken(req, res, next) {
+    const jwtToken = jwt.sign({ uid: req.uid }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    logger.info("User logged in: ", { uid: req.uid });
+    res.status(200).send(jwtToken);
+    next();
+}
 export async function GetUser(req, res, next) {
     try {
         let authdata = await GetAuthData(req.uid);
@@ -40,6 +46,44 @@ export async function GetUser(req, res, next) {
     catch (err) {
         res.status(500).send("Internal Server Error");
         logger.error("Failed to get user details", { "uid": req.uid });
+    }
+    next();
+}
+export async function GetBroker(req, res, next) {
+    try {
+        let rawData = await db.collection("broker_selections").doc(req.uid).get();
+        if (rawData == null) {
+            res.status(404).send();
+            return next();
+        }
+        let brokerId = rawData.get("broker_id");
+        if (brokerId == null || brokerId == "") {
+            res.status(404).send();
+            return next();
+        }
+        res.status(200).send(brokerId);
+    }
+    catch (err) {
+        logger.error("Failed to get user selected broker", { "uid": req.uid, "Request Id": req.headers["x-request-id"], "Message": err });
+        res.status(500).send("Internal Server Error");
+    }
+    next();
+}
+export async function SetBroker(req, res, next) {
+    try {
+        const { broker_id } = req.body;
+        await db.collection("broker_selections").doc(req.uid).set({
+            "broker_id": broker_id
+        }).then(() => {
+            res.status(200).send();
+        }).catch((error) => {
+            logger.error("Error adding document: ", { "uid": req.uid, "Request Id": req.headers["x-request-id"], "Message": error });
+            res.status(500).send("Internal Server Error");
+        });
+    }
+    catch (err) {
+        logger.error("Failed to set user selected broker", { "uid": req.uid, "Request Id": req.headers["x-request-id"], "Message": err });
+        res.status(500).send("Internal Server Error");
     }
     next();
 }

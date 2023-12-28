@@ -63,17 +63,20 @@ async function ExitPosition(authdata, position, subscriber) {
         var order = new Order();
         order.uid = authdata.userid;
         order.actid = authdata.account_id;
-        if (parseFloat(position.netqty) >= 0) {
+        if (parseFloat(position.netqty) > 0) {
             order.quantity = parseFloat(position.netqty);
             order.buy_or_sell = "S";
         }
-        else {
+        else if (parseFloat(position.netqty) < 0) {
             order.quantity = -parseFloat(position.netqty);
             order.buy_or_sell = "B";
         }
+        else {
+            return;
+        }
         order.product_type = position.prd;
         order.price_type = "MKT";
-        order.price = parseFloat(position.lp);
+        order.price = 0;
         order.exchange = position.exch;
         order.tradingsymbol = position.tsym;
         order.remarks = "Order placed By My option RMS";
@@ -98,22 +101,20 @@ async function CheckLimits(authdata, subscriber, positions) {
         urmtom += parseFloat(positions[i].urmtom);
     }
     let daypnl = rpnl + urmtom;
-    if (daypnl >= subscriber.target_profit) {
+    if (subscriber.target_profit != 0 && daypnl >= subscriber.target_profit) {
         positions.map(async (position) => await ExitPosition(authdata, position, subscriber));
-        removeDailyGoalSubscriberData(subscriber);
+        // removeDailyGoalSubscriberData(subscriber)
         return;
     }
-    else if (daypnl <= subscriber.origin - subscriber.stop_loss) {
+    else if ((subscriber.stop_loss != 0) && (daypnl <= subscriber.origin - subscriber.stop_loss)) {
         positions.map(async (position) => await ExitPosition(authdata, position, subscriber));
-        removeDailyGoalSubscriberData(subscriber);
+        // removeDailyGoalSubscriberData(subscriber)
         return;
     }
-    if (subscriber.trailing_stop_loss != 0) {
-        if (daypnl >= subscriber.origin + subscriber.trailing_stop_loss) {
-            var times = Math.abs(daypnl / subscriber.trailing_stop_loss);
-            subscriber.origin = times * subscriber.trailing_stop_loss;
-            updateDailyGoalSubscriberData(subscriber);
-        }
+    if (subscriber.trailing_stop_loss != 0 && (daypnl >= subscriber.origin + subscriber.trailing_stop_loss)) {
+        var times = Math.abs(daypnl / subscriber.trailing_stop_loss);
+        subscriber.origin = times * subscriber.trailing_stop_loss;
+        updateDailyGoalSubscriberData(subscriber);
     }
 }
 async function updateDailyGoalSubscriberData(subscriber) {

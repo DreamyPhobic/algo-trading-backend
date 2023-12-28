@@ -30,7 +30,7 @@ app.use(logRequest, routes, logResponse);
 // // set up logger middleware for response
 // app.use(logResponse);
 
-setInterval(DailyGoalStrategyExecution, 3000);
+// setInterval(DailyGoalStrategyExecution, 3000);
 
 // Schedule the function to run at 12 AM IST (4:30 PM UTC)
 cron.schedule('0 0 * * *', () => {
